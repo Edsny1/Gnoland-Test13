@@ -117,8 +117,9 @@ install_node() {
     else
         info "Installing Docker..."
         sudo install -m 0755 -d /etc/apt/keyrings
+        # GPG dosyasının önceden var olma durumunu `--yes` bayrağı ile ele alıyoruz
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-            | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
         sudo chmod a+r /etc/apt/keyrings/docker.gpg
         echo \
             "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
@@ -134,23 +135,43 @@ install_node() {
     fi
 
     # ── Go ────────────────────────────────────────────────────────────────────
-    if command -v go &>/dev/null; then
-        GO_VER=$(go version | awk '{print $3}')
-        info "Go already installed: $GO_VER"
-    else
-        info "Installing Go..."
-        GO_VERSION="1.22.4"
+    # Install Go only if missing. If present, check version >= 1.22.
+    # We do NOT overwrite an existing Go installation without confirmation
+    # to avoid breaking other nodes on the same server.
+    _do_install_go() {
+        local GO_VERSION="1.22.4"
+        info "Installing Go $GO_VERSION into /usr/local/go..."
         wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
         sudo rm -rf /usr/local/go
         sudo tar -C /usr/local -xzf /tmp/go.tar.gz
         rm /tmp/go.tar.gz
-
-        # Add to PATH if not already there
         if ! grep -q '/usr/local/go/bin' ~/.bashrc; then
             echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc
         fi
         export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
         success "Go $(go version | awk '{print $3}') installed."
+    }
+
+    if command -v go &>/dev/null; then
+        GO_VER_FULL=$(go version | awk '{print $3}' | tr -d 'go')
+        GO_MAJOR=$(echo "$GO_VER_FULL" | cut -d. -f1)
+        GO_MINOR=$(echo "$GO_VER_FULL" | cut -d. -f2)
+        info "Go already installed: go$GO_VER_FULL"
+
+        if [[ "$GO_MAJOR" -gt 1 ]] || [[ "$GO_MAJOR" -eq 1 && "$GO_MINOR" -ge 22 ]]; then
+            success "Go version is sufficient (>= 1.22), skipping installation."
+        else
+            warn "Installed Go (go$GO_VER_FULL) is older than 1.22 — gnoland requires >= 1.22."
+            warn "Upgrading will replace /usr/local/go and may affect other nodes on this server."
+            read -rp "  Upgrade Go to 1.22.4? [y/N]: " UPGRADE_GO
+            if [[ "$UPGRADE_GO" =~ ^[Yy]$ ]]; then
+                _do_install_go
+            else
+                warn "Skipping Go upgrade. Build will likely fail."
+            fi
+        fi
+    else
+        _do_install_go
     fi
 
     # ── Clone & build ─────────────────────────────────────────────────────────
