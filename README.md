@@ -18,6 +18,26 @@ Full guide to run a validator node on **gno.land test13** testnet.
 
 ---
 
+
+## Auto Install
+
+```bash
+# Download and run setup script
+wget -O setup.sh https://raw.githubusercontent.com/Edsny1/Gnoland-Test13/Edsny/scripts/setup.sh
+chmod +x setup.sh
+bash setup.sh
+```
+
+Or with curl:
+
+```bash
+curl -o setup.sh https://raw.githubusercontent.com/Edsny1/Gnoland-Test13/Edsny/scripts/setup.sh
+chmod +x setup.sh
+bash setup.sh
+```
+
+
+
 ## Manual Setup
 
 ### 1. Install dependencies
