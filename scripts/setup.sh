@@ -244,7 +244,7 @@ install_node() {
     GNOROOT="$GNO_DIR" gnoland config set p2p.external_address "${SERVER_IP}:${P2P_PORT}"
     GNOROOT="$GNO_DIR" gnoland config set p2p.laddr "tcp://0.0.0.0:${P2P_PORT}"
     GNOROOT="$GNO_DIR" gnoland config set rpc.laddr "tcp://127.0.0.1:${RPC_PORT}"
-    GNOROOT="$GNO_DIR" gnoland config set telemetry.prometheus_listen_addr ":${PROM_PORT}"
+    #GNOROOT="$GNO_DIR" gnoland config set telemetry.prometheus_listen_addr ":${PROM_PORT}"
     GNOROOT="$GNO_DIR" gnoland config set application.prune_strategy syncable
     GNOROOT="$GNO_DIR" gnoland config set consensus.timeout_commit 3s
     GNOROOT="$GNO_DIR" gnoland config set consensus.peer_gossip_sleep_duration 10ms
